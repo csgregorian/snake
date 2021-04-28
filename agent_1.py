@@ -26,7 +26,8 @@ class DQN:
         self.epsilon_decay = params['epsilon_decay'] 
         self.learning_rate = params['learning_rate']
         self.layer_sizes = params['layer_sizes']
-        self.memory = deque(maxlen=2500)
+        self.memory1 = deque(maxlen=1250)
+        self.memory2 = deque(maxlen=1250)
         self.model = self.build_model()
 
 
@@ -43,7 +44,11 @@ class DQN:
 
 
     def remember(self, state, action, reward, next_state, done):
-        self.memory.append((state, action, reward, next_state, done))
+        if (reward > 0):
+            self.memory1.append((state, action, reward, next_state, done))
+        else:
+            self.memory2.append((state, action, reward, next_state, done))
+
 
 
     def act(self, state):
@@ -55,11 +60,10 @@ class DQN:
 
 
     def replay(self):
-
-        if len(self.memory) < self.batch_size:
+        if len(self.memory1) < int(self.batch_size * 0.5) or len(self.memory2) < int(self.batch_size * 0.5):
             return
 
-        minibatch = random.sample(self.memory, self.batch_size)
+        minibatch = random.sample(self.memory1, int(self.batch_size * 0.5)) + random.sample(self.memory2, int(self.batch_size * 0.5))
         states = np.array([i[0] for i in minibatch])
         actions = np.array([i[1] for i in minibatch])
         rewards = np.array([i[2] for i in minibatch])
@@ -121,7 +125,7 @@ if __name__ == '__main__':
     params['layer_sizes'] = [128, 128, 128]
 
     results = dict()
-    ep = 50
+    ep = 100
 
     # for batchsz in [1, 10, 100, 1000]:
     #     print(batchsz)

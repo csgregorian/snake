@@ -46,6 +46,7 @@ class Snake(gym.Env):
         self.win.title(GAME_TITLE)
         self.win.bgcolor(BG_COLOR)
         self.win.tracer(0)
+        self.win.delay(0)
         self.win.setup(width=PIXEL_W+32, height=PIXEL_H+32)
                 
         # snake
@@ -226,30 +227,30 @@ class Snake(gym.Env):
         self.win.update()
         self.move_snake()
         if self.move_apple():
-            self.reward = 10
+            self.reward = 1
             reward_given = True
         self.move_snakebody()
         self.measure_distance()
         if self.body_check_snake():
-            self.reward = -100
+            self.reward = -1
             reward_given = True
             self.done = True
             if self.human:
                 self.reset()
         if self.wall_check():
-            self.reward = -100
+            self.reward = -1
             reward_given = True
             self.done = True
             if self.human:
                 self.reset()
         if not reward_given:
             if self.dist < self.prev_dist:
-                self.reward = 1
+                self.reward = 0.01
             else:
-                self.reward = -1
+                self.reward = -0.01
         # time.sleep(0.1)
         if self.human:
-            time.sleep(SLEEP)
+            # time.sleep(SLEEP)
             state = self.get_state()
 
     
@@ -318,22 +319,86 @@ class Snake(gym.Env):
 
         # state: apple_up, apple_right, apple_down, apple_left, obstacle_up, obstacle_right, obstacle_down, obstacle_left, direction_up, direction_right, direction_down, direction_left
         if self.env_info['state_space'] == 'coordinates':
-            state = [self.apple.xsc, self.apple.ysc, self.snake.xsc, self.snake.ysc, \
-                    int(wall_up or body_up), int(wall_right or body_right), int(wall_down or body_down), int(wall_left or body_left), \
-                    int(self.snake.direction == 'up'), int(self.snake.direction == 'right'), int(self.snake.direction == 'down'), int(self.snake.direction == 'left')]
+            # coordinates, wall or body collisions, current direction
+            state = [
+                self.apple.xsc,
+                self.apple.ysc,
+                self.snake.xsc,
+                self.snake.ysc,
+                int(wall_up or body_up),
+                int(wall_right or body_right),
+                int(wall_down or body_down),
+                int(wall_left or body_left),
+                int(self.snake.direction == 'up'),
+                int(self.snake.direction == 'right'),
+                int(self.snake.direction == 'down'),
+                int(self.snake.direction == 'left')
+            ]
         elif self.env_info['state_space'] == 'no direction':
-            state = [int(self.snake.y < self.apple.y), int(self.snake.x < self.apple.x), int(self.snake.y > self.apple.y), int(self.snake.x > self.apple.x), \
-                    int(wall_up or body_up), int(wall_right or body_right), int(wall_down or body_down), int(wall_left or body_left), \
-                    0, 0, 0, 0]
+            # apple relative to snake, wall or body collisions, no direction
+            state = [
+                int(self.snake.y < self.apple.y),
+                int(self.snake.x < self.apple.x),
+                int(self.snake.y > self.apple.y),
+                int(self.snake.x > self.apple.x),
+                int(wall_up or body_up),
+                int(wall_right or body_right),
+                int(wall_down or body_down),
+                int(wall_left or body_left),
+                0,
+                0,
+                0,
+                0
+            ]
         elif self.env_info['state_space'] == 'no body knowledge':
-            state = [int(self.snake.y < self.apple.y), int(self.snake.x < self.apple.x), int(self.snake.y > self.apple.y), int(self.snake.x > self.apple.x), \
-                    wall_up, wall_right, wall_down, wall_left, \
-                    int(self.snake.direction == 'up'), int(self.snake.direction == 'right'), int(self.snake.direction == 'down'), int(self.snake.direction == 'left')]
+            # apple relative to snake, wall or body collisions, current direction
+            state = [
+                int(self.snake.y < self.apple.y),
+                int(self.snake.x < self.apple.x),
+                int(self.snake.y > self.apple.y),
+                int(self.snake.x > self.apple.x),
+                wall_up,
+                wall_right,
+                wall_down,
+                wall_left,
+                int(self.snake.direction == 'up'),
+                int(self.snake.direction == 'right'),
+                int(self.snake.direction == 'down'),
+                int(self.snake.direction == 'left')
+            ]
+        elif self.env_info['state_space'] == 'apple distance':
+            # apple coordinates relative to snake, wall or body collisions, current direction
+            state = [
+                int(self.apple.y - self.snake.y),
+                int(self.apple.x - self.snake.x),
+                0,
+                0,
+                int(wall_up or body_up),
+                int(wall_right or body_right),
+                int(wall_down or body_down),
+                int(wall_left or body_left),
+                int(self.snake.direction == 'up'),
+                int(self.snake.direction == 'right'),
+                int(self.snake.direction == 'down'),
+                int(self.snake.direction == 'left')
+            ]
         else:
-            state = [int(self.snake.y < self.apple.y), int(self.snake.x < self.apple.x), int(self.snake.y > self.apple.y), int(self.snake.x > self.apple.x), \
-                    int(wall_up or body_up), int(wall_right or body_right), int(wall_down or body_down), int(wall_left or body_left), \
-                    int(self.snake.direction == 'up'), int(self.snake.direction == 'right'), int(self.snake.direction == 'down'), int(self.snake.direction == 'left')]
-            
+            # apple relative to snake, wall or body collisions, current direction
+            state = [
+                int(self.snake.y < self.apple.y),
+                int(self.snake.x < self.apple.x),
+                int(self.snake.y > self.apple.y),
+                int(self.snake.x > self.apple.x),
+                int(wall_up or body_up),
+                int(wall_right or body_right),
+                int(wall_down or body_down),
+                int(wall_left or body_left),
+                int(self.snake.direction == 'up'),
+                int(self.snake.direction == 'right'),
+                int(self.snake.direction == 'down'),
+                int(self.snake.direction == 'left')
+            ]
+        
         # print(state)
         return state
 
